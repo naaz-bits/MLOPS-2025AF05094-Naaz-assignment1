@@ -1,0 +1,10 @@
+# Minimal runtime for the prediction API (used by the Docker image)
+fastapi==0.142.2
+uvicorn==0.54.0
+pydantic==2.13.5
+prometheus_client==0.26.0
+pandas==3.0.6
+numpy==2.5.3
+scikit-learn==1.9.1
+scipy==1.18.1
+joblib==1.6.0

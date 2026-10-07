@@ -1,0 +1,6 @@
+[
+  {"age": 63, "sex": 1, "cp": 4, "trestbps": 145, "chol": 233, "fbs": 1, "restecg": 2,
+   "thalach": 120, "exang": 1, "oldpeak": 2.3, "slope": 2, "ca": 2, "thal": 7},
+  {"age": 41, "sex": 0, "cp": 2, "trestbps": 130, "chol": 204, "fbs": 0, "restecg": 2,
+   "thalach": 172, "exang": 0, "oldpeak": 1.4, "slope": 1, "ca": 0, "thal": 3}
+]

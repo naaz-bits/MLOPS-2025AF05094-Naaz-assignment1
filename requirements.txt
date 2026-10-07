@@ -1,0 +1,10 @@
+# Full development / training environment
+-r requirements-serve.txt
+mlflow==3.16.1
+matplotlib==3.11.2
+seaborn==0.13.2
+jupyter
+# testing & linting
+pytest==9.1.1
+httpx==0.28.1
+ruff==0.16.10

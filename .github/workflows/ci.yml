@@ -1,0 +1,104 @@
+name: ML CI/CD pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pip install ruff==0.16.10
+      - name: Ruff lint
+        run: ruff check src api tests --output-format=github
+
+  test:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Unit tests
+        run: pytest --junitxml=test-results.xml
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results.xml
+
+  train:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Prepare data
+        run: python -m src.data
+      - name: EDA figures
+        run: python -m src.eda
+      - name: Train + track with MLflow
+        run: python -m src.train | tee training-log.txt
+      - name: Quality gate (CV ROC-AUC >= 0.85)
+        run: |
+          python - <<'EOF'
+          import json, sys
+          m = json.load(open("models/model_meta.json"))
+          auc = m["metrics"]["cv_roc_auc_mean"]
+          print(f"{m['model_name']}: cv_roc_auc_mean={auc}")
+          sys.exit(0 if auc >= 0.85 else "Model below quality threshold")
+          EOF
+      - name: Upload model
+        uses: actions/upload-artifact@v4
+        with:
+          name: model
+          path: models/
+      - name: Upload reports and MLflow store
+        uses: actions/upload-artifact@v4
+        with:
+          name: training-reports
+          path: |
+            training-log.txt
+            reports/
+            mlflow.db
+            mlruns/
+
+  docker:
+    needs: train
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download trained model
+        uses: actions/download-artifact@v4
+        with:
+          name: model
+          path: models/
+      - name: Build image
+        run: docker build -t heart-api:${{ github.sha }} .
+      - name: Smoke test container
+        run: |
+          docker run -d --name api -p 8000:8000 heart-api:${{ github.sha }}
+          for i in $(seq 1 30); do curl -sf localhost:8000/health && break; sleep 1; done
+          curl -sf -X POST localhost:8000/predict \
+               -H 'content-type: application/json' -d @sample_request.json | tee prediction.json
+          python3 -c "import json; r=json.load(open('prediction.json')); assert len(r['results'])==2"
+      - name: Container logs
+        if: always()
+        run: docker logs api

@@ -1,5 +1,7 @@
 # Heart Disease Risk Prediction – End-to-End MLOps
 
+[![ML CI/CD pipeline](https://github.com/naaz-bits/MLOPS-2025AF05094-Naaz-assignment1/actions/workflows/ci.yml/badge.svg)](https://github.com/naaz-bits/MLOPS-2025AF05094-Naaz-assignment1/actions/workflows/ci.yml)
+
 MLOps (AIMLCZG523) Assignment 1. Predicts presence of heart disease from 13 clinical
 features (UCI Heart Disease, Cleveland subset) and serves the model as a monitored,
 containerised API on Kubernetes.

@@ -25,7 +25,7 @@ def test_clean_binarises_target(raw_df):
 
 
 def test_clean_drops_duplicates(raw_df):
-    assert len(clean(raw_df)) == 4
+    assert len(clean(raw_df)) == 5  # deliberately broken to demo CI failure
 
 
 def test_clean_nulls_impossible_cholesterol(raw_df):

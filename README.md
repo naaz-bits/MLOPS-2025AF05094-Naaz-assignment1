@@ -6,7 +6,40 @@ MLOps (AIMLCZG523) Assignment 1. Predicts presence of heart disease from 13 clin
 features (UCI Heart Disease, Cleveland subset) and serves the model as a monitored,
 containerised API on Kubernetes.
 
+**Student:** Naaz (2025AF05094)
+
+## Submission
+
+| Deliverable | Location |
+|-------------|----------|
+| Final report (PDF) | [`report/`](report/) |
+| Pipeline video | _add link_ |
+| Screenshots (50 + architecture) | [`screenshots/`](screenshots/) |
+| CI/CD runs | [GitHub Actions](https://github.com/naaz-bits/MLOPS-2025AF05094-Naaz-assignment1/actions) |
+| Cleaned dataset / download script | `data/processed/heart_clean.csv` / `src/data.py` |
+| EDA, training, inference | `notebooks/01_eda.ipynb`, `src/train.py`, `notebooks/02_inference.ipynb` |
+| Deployment manifests | [`k8s/`](k8s/) |
+| API access | local Kubernetes, no public URL — see [Deploy to Kubernetes](#deploy-to-kubernetes) |
+
+## Results
+
+Three models tuned with `GridSearchCV` (5-fold stratified CV, ROC-AUC) on an 80/20 stratified split.
+The winner is picked on **CV ROC-AUC**, not the 61-patient test set.
+
+| Model | CV ROC-AUC | Test ROC-AUC | Test accuracy | Test recall |
+|-------|-----------:|-------------:|--------------:|------------:|
+| Logistic Regression | 0.9039 | 0.968 | 0.885 | 0.929 |
+| **Random Forest** (selected) | **0.9047** | 0.950 | 0.885 | 0.929 |
+| Gradient Boosting | 0.8741 | 0.961 | 0.902 | 0.929 |
+
+Random Forest: 100 trees, max depth 5, min samples per leaf 5. Full metrics in
+`reports/model_comparison.csv` and in MLflow (experiment `heart-disease-classification`).
+
 ## Architecture
+
+![Architecture](screenshots/00_architecture.png)
+
+<details><summary>Mermaid source</summary>
 
 ```mermaid
 flowchart LR
@@ -27,6 +60,8 @@ flowchart LR
     end
     USER((client)) -->|POST /predict| LB
 ```
+
+</details>
 
 ## Repository layout
 
@@ -84,11 +119,30 @@ Example response:
 **Docker Compose with monitoring:** `docker compose up --build` starts the API (:8000),
 Prometheus (:9090) and Grafana (:3000).
 
-## Deploy to Kubernetes (Docker Desktop)
+## Deploy to Kubernetes
+
+**Docker Desktop** — the LoadBalancer maps straight to `localhost`:
 
 1. Docker Desktop → Settings → Kubernetes → *Enable Kubernetes* → Apply.
 2. `kubectl config use-context docker-desktop`
 3. `./k8s/deploy.sh`
+
+**Minikube** (used for the submitted deployment, on the Prayogshala Linux VM) — the image must be
+loaded into the cluster, and services are reached with port-forward (or `minikube tunnel`):
+
+```bash
+minikube start --driver=docker --cpus=2 --memory=4096
+kubectl config use-context minikube
+docker build -t heart-api:1.0 . && minikube image load heart-api:1.0
+./k8s/deploy.sh
+kubectl -n heart-disease port-forward svc/heart-api  8080:8080 &
+kubectl -n heart-disease port-forward svc/prometheus 9090:9090 &
+kubectl -n heart-disease port-forward svc/grafana    3000:3000 &
+curl -s localhost:8080/health
+curl -s -X POST localhost:8080/predict -H 'content-type: application/json' -d @sample_request.json
+```
+
+Either way:
 
 | Service | URL |
 |---------|-----|

@@ -12,8 +12,8 @@ containerised API on Kubernetes.
 
 | Deliverable | Location |
 |-------------|----------|
-| Final report (PDF) | [`report/`](report/) |
-| Pipeline video | _add link_ |
+| Final report (PDF) | [`report/MLOps_Assignment1_Report_2025AF05094.pdf`](report/MLOps_Assignment1_Report_2025AF05094.pdf) |
+| Pipeline video | [Google Drive](https://drive.google.com/file/d/1NQay5J8RSeEPfjZwnst5nUMSHlH6FOjJ/view?usp=drive_link) |
 | Screenshots (50 + architecture) | [`screenshots/`](screenshots/) |
 | CI/CD runs | [GitHub Actions](https://github.com/naaz-bits/MLOPS-2025AF05094-Naaz-assignment1/actions) |
 | Cleaned dataset / download script | `data/processed/heart_clean.csv` / `src/data.py` |
